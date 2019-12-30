@@ -1,8 +1,9 @@
+import 'dotenv/config';
+
 import express from 'express';
 import moment from 'moment';
 import fetch from 'node-fetch';
-import 'dotenv/config';
-
+import fs from 'fs';
 import ControlId from './controlid';
 
 const app = express();
@@ -18,7 +19,12 @@ app.post('/controlid/notifications/dao', async (req, res) => {
 
       if (typeof values !== 'undefined') {
 
-        const ip_device = req.ip.replace('::ffff:', '');
+        // const ip_device = req.ip.replace('::ffff:', '');
+
+        const devices = JSON.parse(fs.readFileSync('./devices.json', 'utf-8'));
+        const reader = devices.find(device => device.id == values.device_id);
+
+
         const when = moment(values.time * 1000).utc().format('YYYY-MM-DD HH:mm:ss');
 
         const { event, user_id } = values;
@@ -28,7 +34,7 @@ app.post('/controlid/notifications/dao', async (req, res) => {
 
         if (newAccessEvent && authorized) {
 
-          const device = new ControlId(ip_device, process.env.BIO_LOGIN, process.env.BIO_PASSWORD);
+          const device = new ControlId(reader.ip, process.env.BIO_LOGIN, process.env.BIO_PASSWORD);
 
           await device.logon();
 
@@ -78,7 +84,8 @@ app.post('/controlid/notifications/dao', async (req, res) => {
 app.delete('/users/:id/', async (req, res) => {
 
   const { id } = req.params;
-  const devices = req.body;
+  const devices = JSON.parse(fs.readFileSync('./devices.json', 'utf-8'));
+  //const devices = req.body;
 
   const actions = devices.map(({ ip, login, password }) => {
     return new Promise(async (resolve, reject) => {
