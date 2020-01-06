@@ -52,11 +52,15 @@ class LogController {
             ip_device: reader.ip,
           });
 
+          // console.log(body);
+
           const result = await fetch(process.env.END_POINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body,
           });
+
+          // console.log(result);
 
           const json = await result.json();
 
