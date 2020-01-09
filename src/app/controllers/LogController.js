@@ -1,9 +1,7 @@
 import 'dotenv/config';
-
-import fs from 'fs';
-import path from 'path';
 import moment from 'moment';
 import fetch from 'node-fetch';
+import Devices from '../models/devices';
 import ControlId from '../../lib/controlid';
 
 class LogController {
@@ -13,14 +11,12 @@ class LogController {
     object_changes.map(async ({ object, type, values }) => {
       if (typeof values !== 'undefined') {
         // const ip_device = req.ip.replace('::ffff:', '');
-        const devices = JSON.parse(
-          fs.readFileSync(
-            path.resolve(__dirname, '..', '..', 'database', 'devices.json'),
-            'utf-8'
-          )
-        );
 
-        const reader = devices.find(device => device.id === values.device_id);
+        const reader = await Devices.findOne({
+          where: { idDevice: values.device_id },
+        });
+
+        // console.log(reader.ip);
 
         const when = moment(values.time * 1000)
           .utc()
