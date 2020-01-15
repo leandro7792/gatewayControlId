@@ -11,5 +11,7 @@ routes.post('/controlid/notifications/dao', LogController.store);
 routes.delete('/users/:id', UserController.remove);
 
 routes.post('/rules/:id_user', RulesController.store);
+routes.delete('/rules/:id_user', RulesController.remove);
+routes.put('/rules/:id_user', RulesController.update);
 
 export default routes;

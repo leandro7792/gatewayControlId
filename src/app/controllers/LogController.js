@@ -2,6 +2,7 @@ import 'dotenv/config';
 import moment from 'moment';
 import fetch from 'node-fetch';
 import Devices from '../models/devices';
+import Logs from '../models/logs';
 import ControlId from '../../lib/controlid';
 
 class LogController {
@@ -27,42 +28,54 @@ class LogController {
         const newAccessEvent = object === 'access_logs' && type === 'inserted';
 
         if (newAccessEvent && authorized) {
-          const device = new ControlId(
-            reader.ip,
-            process.env.BIO_LOGIN,
-            process.env.BIO_PASSWORD
-          );
+          try {
+            const device = new ControlId(
+              reader.ip,
+              process.env.BIO_LOGIN,
+              process.env.BIO_PASSWORD
+            );
 
-          await device.logon();
+            await device.logon();
 
-          const { users } = await device.getObjects('users', {
-            users: { id: parseInt(user_id, 10) },
-          });
+            const { users } = await device.getObjects('users', {
+              users: { id: parseInt(user_id, 10) },
+            });
 
-          const { registration, name } = users[0];
+            const { registration, name } = users[0];
 
-          const body = JSON.stringify({
-            id: registration,
-            name,
-            when,
-            ip_device: reader.ip,
-          });
+            const body = JSON.stringify({
+              id: registration,
+              name,
+              when,
+              ip_device: reader.ip,
+            });
 
-          // console.log(body);
+            // console.log(body);
 
-          const result = await fetch(process.env.END_POINT, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body,
-          });
+            const result = await fetch(process.env.END_POINT, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body,
+            });
 
-          // console.log(result);
+            // console.log(result);
 
-          const json = await result.json();
+            const json = await result.json();
 
-          // retorno do id inserido na tabela access_log
-          if (json > 0) {
-            // tudo ok :)
+            // retorno do id inserido na tabela access_log
+            if (json > 0) {
+              // tudo ok :)
+            }
+          } catch (error) {
+            const data = {
+              error,
+              ip: reader.ip,
+              body: req.body,
+              action: 'logcontroller.store',
+              retry: true,
+            };
+
+            await Logs.create(data);
           }
         }
       }

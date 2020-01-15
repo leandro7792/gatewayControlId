@@ -2,6 +2,7 @@
 
 // import fs from 'fs';
 // import path from 'path';
+import Logs from '../models/logs';
 import ControlId from '../../lib/controlid';
 
 class UserController {
@@ -14,7 +15,7 @@ class UserController {
     //   )
     // );
 
-    const devices = JSON.parse(req.body);
+    const devices = req.body;
 
     const actions = devices.map(({ ip, login, password }) => {
       return new Promise(async (resolve, reject) => {
@@ -40,7 +41,16 @@ class UserController {
 
           resolve(response);
         } catch (error) {
-          reject(error);
+          const data = {
+            error,
+            ip,
+            body: req.body,
+            action: 'usercontroller.remove',
+            retry: true,
+          };
+
+          await Logs.create(data);
+          resolve();
         }
       });
     });
