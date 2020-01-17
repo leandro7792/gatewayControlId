@@ -20,11 +20,12 @@ class RulesController {
 
     // console.log(req.body);
     // hour in miliseconds
-    const hourInitUnix = parseInt(hourInit, 10) * 60 * 60;
+    // add/subtract 15 minuts
+    const hourInitUnix = parseInt(hourInit, 10) * 60 * 60 - 900;
     const hourEndUnix =
       hourEnd === '24'
         ? 86399 // 23:59:59
-        : parseInt(hourEnd, 10) * 60 * 60;
+        : parseInt(hourEnd, 10) * 60 * 60 + 900;
 
     // console.log(`${dateInit} ${hourInit}:00+0000`);
 
