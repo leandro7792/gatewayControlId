@@ -19,13 +19,14 @@ class RulesController {
     } = req.body;
 
     // console.log(req.body);
-
     // hour in miliseconds
     const hourInitUnix = parseInt(hourInit, 10) * 60 * 60;
     const hourEndUnix =
       hourEnd === '24'
         ? 86399 // 23:59:59
         : parseInt(hourEnd, 10) * 60 * 60;
+
+    // console.log(`${dateInit} ${hourInit}:00+0000`);
 
     // period
     const dateStartUnix = moment(`${dateInit} ${hourInit}:00+0000`).unix();
@@ -34,6 +35,7 @@ class RulesController {
     // console.log(req.body);
 
     const devices = await Devices.findAll();
+
     // console.log(units);
     const unitsArray = units.split(',');
     unitsArray.pop(); // remove ultimo elemeto (vazio)
@@ -196,7 +198,7 @@ class RulesController {
 
     await Promise.all(actions);
 
-    return res.status(200).json();
+    return res.status(200).json({ ok: 'ok' });
   }
 
   async remove(req, res) {
@@ -238,6 +240,12 @@ class RulesController {
               name: `SP:${idEntity} U:${unit} P:${dateInit} ${hourInit}/${dateEnd} ${hourEnd}`,
             },
           });
+
+          if (JSON.stringify(access_rules) === '[]') {
+            console.log('vazio');
+            return res.status(200).json();
+          }
+
           // console.log(
           //   `SP:${idEntity} U:${unit} P:${dateInit} ${hourInit}/${dateEnd} ${hourEnd}`
           // );
@@ -250,54 +258,59 @@ class RulesController {
           });
           // console.log(time_zones);
 
-          // const portal_access_rules = await leitor.removeObjects(
-          await leitor.removeObjects('portal_access_rules', {
-            portal_access_rules: {
-              access_rule_id: access_rules[0].id,
-            },
-          });
-          // console.log(portal_access_rules);
+          access_rules.map(async ({ id }) => {
+            // const portal_access_rules = await leitor.removeObjects(
+            await leitor.removeObjects('portal_access_rules', {
+              portal_access_rules: {
+                access_rule_id: id,
+              },
+            });
+            // console.log(portal_access_rules);
 
-          // const access_rule_time_zones = await leitor.removeObjects(
-          await leitor.removeObjects('access_rule_time_zones', {
-            access_rule_time_zones: {
-              access_rule_id: access_rules[0].id,
-            },
+            // const access_rule_time_zones = await leitor.removeObjects(
+            await leitor.removeObjects('access_rule_time_zones', {
+              access_rule_time_zones: {
+                access_rule_id: id,
+              },
+            });
+            // console.log(access_rule_time_zones);
+
+            // const access_rules_exclude = await leitor.removeObjects(
+            await leitor.removeObjects('access_rules', {
+              access_rules: {
+                id,
+              },
+            });
+            // console.log(access_rules_exclude);
+
+            // const user_access_rules = await leitor.removeObjects(
+            await leitor.removeObjects('user_access_rules', {
+              user_access_rules: {
+                user_id: users[0].id,
+                access_rule_id: id,
+              },
+            });
+            // console.log(user_access_rules);
           });
-          // console.log(access_rule_time_zones);
 
           // const time_spans = await leitor.removeObjects('time_spans', {
-          await leitor.removeObjects('time_spans', {
-            time_spans: {
-              time_zone_id: time_zones[0].id,
-            },
-          });
-          // console.log(time_spans);
 
-          // const time_zones_exclude = await leitor.removeObjects('time_zones', {
-          await leitor.removeObjects('time_zones', {
-            time_zones: {
-              id: time_zones[0].id,
-            },
-          });
-          // console.log(time_zones_exclude);
+          time_zones.map(async ({ id }) => {
+            await leitor.removeObjects('time_spans', {
+              time_spans: {
+                time_zone_id: id,
+              },
+            });
+            // console.log(time_spans);
 
-          // const user_access_rules = await leitor.removeObjects(
-          await leitor.removeObjects('user_access_rules', {
-            user_access_rules: {
-              user_id: users[0].id,
-              access_rule_id: access_rules[0].id,
-            },
+            // const time_zones_exclude = await leitor.removeObjects('time_zones', {
+            await leitor.removeObjects('time_zones', {
+              time_zones: {
+                id,
+              },
+            });
+            // console.log(time_zones_exclude);
           });
-          // console.log(user_access_rules);
-
-          // const access_rules_exclude = await leitor.removeObjects(
-          await leitor.removeObjects('access_rules', {
-            access_rules: {
-              id: access_rules[0].id,
-            },
-          });
-          // console.log(access_rules_exclude);
 
           resolve();
         } catch (error) {
